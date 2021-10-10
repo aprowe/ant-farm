@@ -1,0 +1,16 @@
+[package]
+name = "ant_farm"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+tui = "*"
+legion = "*"
+termion = "*"
+rand = "*"
+evo = {path="evo"}
+
+[workspace]
+members = [
+    "evo"
+]

@@ -1,0 +1,18 @@
+[package]
+name = "evo"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+name = "evo"
+
+[[test]]
+name = "tests"
+path = "tests.rs"
+
+[dependencies]
+rand = "*"
+lazy_static = "*"
+maplit = "*"
+rulinalg = "0.3.4"
+evo_macros = { path = "./evo_macros" }
