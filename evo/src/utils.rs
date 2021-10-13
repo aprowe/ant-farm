@@ -1,14 +1,13 @@
-
-pub fn random() -> f32 {
+pub fn random() -> f64 {
     rand::random()
 }
 
-pub fn random_d(delta: f32) -> f32 {
-    (rand::random::<f32>() - 0.5) * 2.0 * delta
+pub fn random_d(delta: f64) -> f64 {
+    (rand::random::<f64>() - 0.5) * 2.0 * delta
 }
 
-pub fn random_clamp(min: f32, max: f32) -> f32 {
-    rand::random::<f32>() * (max - min) + min
+pub fn random_clamp(min: f64, max: f64) -> f64 {
+    rand::random::<f64>() * (max - min) + min
 }
 
 pub fn random_i(max: usize) -> usize {
@@ -28,7 +27,6 @@ where
         x => x,
     }
 }
-
 
 pub trait VecUtils {
     type Item;
@@ -80,14 +78,23 @@ impl<T> VecUtils for Vec<T> {
 pub trait Sum<T> {
     fn sum(&self) -> T;
     fn mean(&self) -> T;
+    fn std(&self) -> (T, T);
 }
 
-impl Sum<f32> for Vec<f32> {
-    fn sum(&self) -> f32 {
+impl Sum<f64> for Vec<f64> {
+    fn sum(&self) -> f64 {
         self.iter().fold(0.0, |a, b| a + b)
     }
-    fn mean(&self) -> f32 {
-        self.sum() / self.len() as f32
+    fn mean(&self) -> f64 {
+        self.sum() / self.len() as f64
+    }
+    fn std(&self) -> (f64, f64) {
+        let mean = self.mean();
+        (
+            mean,
+            (self.iter().fold(0.0, |s, x|
+                              s + (x - mean) * (x - mean)) / self.len() as f64).sqrt(),
+        )
     }
 }
 

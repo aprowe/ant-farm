@@ -7,7 +7,7 @@ use syn::{
 struct BreederSpec {
     name: syn::Ident,
     ty: syn::Type,
-    weight: f32,
+    weight: f64,
 }
 
 fn remove_attrs(data: &mut Data){
@@ -35,7 +35,7 @@ fn get_breeders(data: &Data) -> Vec<BreederSpec> {
                 .map(|f| {
                     let tokens = &f.attrs.first().unwrap().tokens;
                     let fstring = tokens.to_string();
-                    let weight: f32 = fstring[1..fstring.len() - 1].parse().unwrap();
+                    let weight: f64 = fstring[1..fstring.len() - 1].parse().unwrap();
 
                     BreederSpec {
                         ty: f.ty.clone(),
@@ -73,7 +73,7 @@ fn create_impl(ident: &syn::Ident, breeders: &Vec<BreederSpec>) -> TokenStream {
         let BreederSpec {name, weight, .. } = b;
 
         quote! {
-            #name: if rand::random::<f32>() < #weight {
+            #name: if rand::random::<f64>() < #weight {
                 self.#name.mutate(&g.#name)
             } else {
                 g.#name.clone()
@@ -85,9 +85,9 @@ fn create_impl(ident: &syn::Ident, breeders: &Vec<BreederSpec>) -> TokenStream {
         let BreederSpec {name, weight, .. } = b;
 
         quote! {
-            #name: if rand::random::<f32>() < #weight {
+            #name: if rand::random::<f64>() < #weight {
                 self.#name.breed(&g1.#name, &g2.#name)
-            } else if rand::random::<f32>() < 0.5 {
+            } else if rand::random::<f64>() < 0.5 {
                 g1.#name.clone()
             } else {
                 g2.#name.clone()

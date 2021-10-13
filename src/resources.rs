@@ -1,5 +1,4 @@
 use tui::layout::Rect;
-use evo::Pool;
 
 
 #[derive(Copy, Clone, Debug)]

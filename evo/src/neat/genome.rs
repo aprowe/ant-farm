@@ -302,7 +302,7 @@ mod tests {
             let input = vec![0.0, 0.0];
             let mut output = vec![0.0, 0.0];
             o.activate(input, &mut output);
-            pool.report(id, g, output.iter().sum::<f64>() as f32);
+            pool.report(id, g, output.iter().sum::<f64>() as f64);
         }
         let (id, g) = pool.next().unwrap();
         let mut o = NeatNetwork::new(g.clone());

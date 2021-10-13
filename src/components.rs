@@ -23,8 +23,8 @@ impl From<&Color> for [f64; 4] {
     }
 }
 
-impl From<&Vec<f32>> for Color {
-    fn from(v: &Vec<f32>) -> Self {
+impl From<&Vec<f64>> for Color {
+    fn from(v: &Vec<f64>) -> Self {
         Color {
             r: v[0] as f64,
             b: v[1] as f64,
@@ -175,7 +175,7 @@ impl Default for Energy {
     fn default() -> Self {
         Self {
             amt: 1.0,
-            decay: 0.2,
+            decay: 0.1,
         }
     }
 }

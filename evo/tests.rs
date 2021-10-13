@@ -29,7 +29,7 @@ fn test_xor() {
             d += (0.0 - x.remove(0)).powi(2);
         }
         let fitness = 16f64 / (1f64 + d);
-        fitness as f32
+        fitness as f64
     });
 
 }

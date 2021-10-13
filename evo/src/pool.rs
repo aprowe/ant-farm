@@ -7,11 +7,11 @@ use crate::utils::*;
 
 pub struct Species<B: Breeder> {
     pub model: B::Genome,
-    pub champion: Option<(f32, B::Genome)>,
+    pub champion: Option<(f64, B::Genome)>,
     pub pool: Vec<B::Genome>,
-    pub reported: Vec<(f32, B::Genome)>,
+    pub reported: Vec<(f64, B::Genome)>,
     pub gens_empty: i32,
-    pub last_mean: f32,
+    pub last_mean: f64,
 }
 
 impl<B: Breeder> Species<B> {
@@ -38,7 +38,7 @@ impl<B: Breeder> Species<B> {
         // Sort scores
         self.reported.sort_by_key(|x| (-100000.0 * x.0) as i32);
         // record mean
-        self.last_mean = self.reported.iter().map(|x| x.0).sum::<f32>() / self.reported.len() as f32;
+        self.last_mean = self.reported.iter().map(|x| x.0).sum::<f64>() / self.reported.len() as f64;
         // Record champion
         self.champion = Some(self.reported.first().unwrap().clone());
         self.model = self.reported.sample().clone().1;
@@ -48,7 +48,7 @@ impl<B: Breeder> Species<B> {
 //             .iter()
 //             .take(10)
 //             .map(|(s, _)| *s)
-//             .collect::<Vec<f32>>();
+//             .collect::<Vec<f64>>();
 
         // if let Some((_, model)) = self.reported.first().cloned() {
         // } else {
@@ -62,13 +62,13 @@ impl<B: Breeder> Species<B> {
         breeder: &B,
         global: &[&B::Genome],
         size: i32,
-        ratios: &Ratios<f32>,
+        ratios: &Ratios<f64>,
     ) -> Vec<B::Genome> {
         let size = std::cmp::max(1, size);
         if self.reported.len() == 0 {
             return vec![];
         }
-        // let size = std::cmp::max(2, (self.reported.len() as f32 * growth).round() as usize);
+        // let size = std::cmp::max(2, (self.reported.len() as f64 * growth).round() as usize);
 
         // Get normalized ratio valies
         let ratios = if size > 2 {
@@ -133,7 +133,7 @@ where
 
     /// Mutable Pooles
     pool: Vec<(i32, B::Genome)>,
-    reported: Vec<(i32, B::Genome, f32)>,
+    reported: Vec<(i32, B::Genome, f64)>,
     species: HashMap<i32, Species<B>>,
     cur_id: i32,
 
@@ -141,14 +141,14 @@ where
     size: usize,
 
     /// Ratios of different methods
-    pub ratios: Ratios<f32>,
+    pub ratios: Ratios<f64>,
 
     /// Stats
-    pub mean_score: f32,
+    pub mean_score: f64,
     pub generations: i32,
-    pub last_mean: f32,
-    pub last_best: f32,
-    pub champion: Option<(f32, B::Genome)>,
+    pub last_mean: f64,
+    pub last_best: f64,
+    pub champion: Option<(f64, B::Genome)>,
     pub gens_without_improvement: i32,
 }
 
@@ -203,7 +203,7 @@ where
     }
 
     /// Report a Gene back to the pool
-    pub fn report<F>(&mut self, species_id: i32, member: F, score: f32) -> bool
+    pub fn report<F>(&mut self, species_id: i32, member: F, score: f64) -> bool
     where
         F: Into<B::Genome>,
     {
@@ -235,7 +235,7 @@ where
     }
 
     /// Calculate the Running Mean score
-    pub fn mean_score(&self) -> f32 {
+    pub fn mean_score(&self) -> f64 {
         if self.species.len() == 0 {
             panic!("No Species!");
         }
@@ -243,12 +243,12 @@ where
         self.species
             .iter()
             .map(|(_, s)| s.last_mean)
-            .sum::<f32>()
-            / self.species.len() as f32
+            .sum::<f64>()
+            / self.species.len() as f64
     }
 
     /// Calculate the Running Mean score
-    pub fn mean_best(&self) -> f32 {
+    pub fn mean_best(&self) -> f64 {
         if self.species.len() == 0 {
             panic!("No Species!");
         }
@@ -260,16 +260,16 @@ where
             .map(|s| s.champion.as_ref().unwrap().0)
             .collect();
 
-        scores.sum() / scores.len() as f32
+        scores.sum() / scores.len() as f64
     }
 
     /// Calculate the Running Mean score
-    pub fn get_champion(&self) -> Option<(f32, B::Genome)> {
+    pub fn get_champion(&self) -> Option<(f64, B::Genome)> {
         if self.species.len() == 0 {
             return None;
         }
 
-        let mut best: Option<&(f32, B::Genome)> = None;
+        let mut best: Option<&(f64, B::Genome)> = None;
         for c in self
             .species
             .values()
@@ -336,7 +336,7 @@ where
         let mut new_pool: Vec<(Option<i32>, B::Genome)> = self.species.values()
             // Flatten and gather new genomes
             .flat_map(|s| {
-                let size = s.last_mean * (self.size as f32) / self.last_mean / self.species.len() as f32;
+                let size = s.last_mean * (self.size as f64) / self.last_mean / self.species.len() as f64;
                 s.next_generation(&self.breeder, &combined_pool, size.round() as i32, &self.ratios)
             })
             // Iterator over all genomes
@@ -359,7 +359,7 @@ where
         // Resolve new IDs
         let mut new_pool: Vec<(i32, B::Genome)> = new_pool
             .into_iter()
-            .take(self.size + (self.size as f32 * self.species.len() as f32 * 0.1) as usize)
+            .take(self.size + (self.size as f64 * self.species.len() as f64 * 0.1) as usize)
             .map(|(id, g)| {
                 if let Some(id) = id {
                     (id, g)
@@ -395,9 +395,9 @@ where
         max_gens: i32,
         max_gens_without_improve: i32,
         f: F,
-    ) -> (bool, f32, G)
+    ) -> (bool, f64, G)
     where
-        F: Fn(G) -> f32,
+        F: Fn(G) -> f64,
         G: From<B::Genome>,
     {
         let mut t1 = SystemTime::now();
@@ -439,17 +439,26 @@ where
     pub random: T,
 }
 
-impl Ratios<f32> {
+impl Ratios<f64> {
     /// Convert into integer ratios
-    fn to_int(&self, max: usize) -> Ratios<usize> {
-        let top = (max as f32 * self.top).floor() as usize;
-        let mutate = (max as f32 * self.mutate).floor() as usize;
-        let cross = (max as f32 * self.cross).floor() as usize;
+    pub fn to_int(&self, max: usize) -> Ratios<usize> {
+        let top = (max as f64 * self.top).floor() as usize;
+        let mutate = (max as f64 * self.mutate).floor() as usize;
+        let cross = (max as f64 * self.cross).floor() as usize;
         Ratios {
             top,
             mutate,
             cross,
             random: max - top - mutate - cross,
+        }
+    }
+
+    pub fn cumulative(&self) -> Self {
+        Self {
+            top: self.top,
+            mutate: self.top + self.mutate,
+            cross: self.top + self.mutate + self.cross,
+            random: self.top + self.mutate + self.cross + self.random,
         }
     }
 }
@@ -468,11 +477,11 @@ mod test {
     }
 
     struct Fuck {
-        x: f32,
+        x: f64,
     }
 
-    impl From<f32> for Fuck {
-        fn from(x: f32) -> Self {
+    impl From<f64> for Fuck {
+        fn from(x: f64) -> Self {
             Self { x }
         }
     }

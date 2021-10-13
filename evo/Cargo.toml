@@ -15,4 +15,5 @@ rand = "*"
 lazy_static = "*"
 maplit = "*"
 rulinalg = "0.3.4"
+statrs = "*"
 evo_macros = { path = "./evo_macros" }

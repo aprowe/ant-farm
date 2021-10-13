@@ -1,16 +1,16 @@
 //use crate::breeder::Breeder;
 //use crate::utils::{random, random_d};
 
-//type Signal<const N: usize> = [f32; N];
+//type Signal<const N: usize> = [f64; N];
 
 //#[derive(Debug, Clone)]
 //struct Cell<const N: usize> {
-//    weights: [[f32; N]; N],
-//    biases: [f32; N],
+//    weights: [[f64; N]; N],
+//    biases: [f64; N],
 //}
 
 //impl<const N: usize> Cell<N> {
-//    fn mutate(&self, rate: f32, amt: f32) -> Cell<N> {
+//    fn mutate(&self, rate: f64, amt: f64) -> Cell<N> {
 //        let mut new_cell = self.clone();
 //        for x in 0..N {
 //            for y in 0..N {
@@ -26,7 +26,7 @@
 //        new_cell
 //    }
 
-//    fn breed(&self, other: &Self, rate: f32) -> Cell<N> {
+//    fn breed(&self, other: &Self, rate: f64) -> Cell<N> {
 //        let mut new_cell = self.clone();
 //        let mut flip = false;
 
@@ -81,9 +81,9 @@
 
 //struct CellNetworkBreeder<const N: usize> {
 //    initial_cells: i32,
-//    cell_mutate_rate: f32,
-//    cell_mutate_amt: f32,
-//    cell_flip_rate: f32,
+//    cell_mutate_rate: f64,
+//    cell_mutate_amt: f64,
+//    cell_flip_rate: f64,
 //}
 
 //impl<const N: usize> Breeder for CellNetworkBreeder<N> {
@@ -157,7 +157,7 @@
 //}
 
 //impl<const N: usize> CellNetwork<N> {
-//    fn update(&mut self, dt: f32, input: &Signal<N>) {
+//    fn update(&mut self, dt: f64, input: &Signal<N>) {
 //        for i in 0..N {
 //            self.state[i] += (input[i] - self.state[i]) * dt;
 //        }

@@ -17,12 +17,12 @@ pub trait Breeder {
 /// Breeder that breeds lists of floats
 pub struct VecBreeder {
     pub size: usize,
-    pub min: f32,
-    pub max: f32,
-    pub delta: f32,
-    pub mutate_rate: f32,
-    pub flip_rate: f32,
-    pub is_same_threshold: f32,
+    pub min: f64,
+    pub max: f64,
+    pub delta: f64,
+    pub mutate_rate: f64,
+    pub flip_rate: f64,
+    pub is_same_threshold: f64,
 }
 
 impl Default for VecBreeder {
@@ -40,12 +40,12 @@ impl Default for VecBreeder {
 }
 
 impl Breeder for VecBreeder {
-    type Genome = Vec<f32>;
+    type Genome = Vec<f64>;
 
     fn mutate(&self, gene: &Self::Genome) -> Self::Genome {
         gene.iter()
             .map(|x| {
-                if random() < self.mutate_rate / (self.size as f32) {
+                if random() < self.mutate_rate / (self.size as f64) {
                     clamp(x + random_d(self.delta), self.min, self.max)
                 } else {
                     *x
@@ -60,7 +60,7 @@ impl Breeder for VecBreeder {
             .iter()
             .zip(gene2)
             .map(|(g1, g2)| {
-                if random() < self.flip_rate / (self.size as f32) {
+                if random() < self.flip_rate / (self.size as f64) {
                     flip = !flip;
                 }
                 if flip {
@@ -79,9 +79,9 @@ impl Breeder for VecBreeder {
     }
 
     fn is_same(&self, gene1: &Self::Genome, gene2: &Self::Genome) -> bool {
-        gene1.iter().zip(gene2).fold(0f32, |s, (x, y)| {
+        gene1.iter().zip(gene2).fold(0f64, |s, (x, y)| {
             s + (x - y) * (x - y) / (self.max - self.min) / (self.max - self.min)
-        }) / (self.size as f32)
+        }) / (self.size as f64)
             < self.is_same_threshold
     }
 }
@@ -89,13 +89,13 @@ impl Breeder for VecBreeder {
 
 /// Float Breeder
 pub struct FloatBreeder {
-    pub min: f32,
-    pub max: f32,
-    pub delta: f32,
+    pub min: f64,
+    pub max: f64,
+    pub delta: f64,
 }
 
 impl Breeder for FloatBreeder {
-    type Genome = f32;
+    type Genome = f64;
 
     fn mutate(&self, gene: &Self::Genome) -> Self::Genome {
         (gene + random_d(self.delta)).clamp(self.min, self.max)

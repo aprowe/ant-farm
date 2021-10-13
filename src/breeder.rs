@@ -1,5 +1,5 @@
 use evo::utils::random;
-use evo::*;
+use evo::{NeatBreeder, Pool2 as Pool, VecBreeder, derive_breeder, Breeder};
 
 #[derive_breeder]
 pub struct AntBreeder {

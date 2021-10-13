@@ -13,7 +13,7 @@ use crate::systems::*;
 use crate::creature::*;
 use crate::utils::{Config as EventConfig, Event, Events};
 use breeder::AntBreeder;
-use evo::Pool;
+use evo::Pool2 as Pool;
 use evo::pool::Ratios;
 use legion::*;
 use std::{error::Error, io, time::Duration};
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut world = World::default();
     let mut resources = Resources::default();
     let mut pool = Pool::new(200, AntBreeder::default());
-    pool.ratios = Ratios::<f32> {
+    pool.ratios = Ratios::<f64> {
         top: 0.1,
         mutate: 0.4,
         cross: 0.4,
