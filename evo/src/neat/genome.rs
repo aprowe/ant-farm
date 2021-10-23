@@ -197,14 +197,14 @@ impl NeatGenome {
 }
 
 pub struct NeatBreeder {
-    inputs: usize,
-    outputs: usize,
-    mutate_connection_weight: f64,
-    mutate_add_connection: f64,
-    mutate_add_neuron: f64,
-    mutate_toggle_expression: f64,
-    mutate_connection_weight_perturbed_probability: f64,
-    mutate_toggle_bias: f64,
+    pub inputs: usize,
+    pub outputs: usize,
+    pub mutate_connection_weight: f64,
+    pub mutate_add_connection: f64,
+    pub mutate_add_neuron: f64,
+    pub mutate_toggle_expression: f64,
+    pub mutate_connection_weight_perturbed_probability: f64,
+    pub mutate_toggle_bias: f64,
 }
 
 impl NeatBreeder {
@@ -226,7 +226,7 @@ impl Default for NeatBreeder {
             mutate_add_connection: 0.015f64,
             mutate_add_neuron: 0.014f64,
             mutate_toggle_expression: 0.05f64,
-            mutate_connection_weight_perturbed_probability: 0.5f64,
+            mutate_connection_weight_perturbed_probability: 0.9f64,
             mutate_toggle_bias: 0.05,
         }
     }
@@ -288,29 +288,7 @@ impl Breeder for NeatBreeder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::neat::organism::NeatNetwork;
-    use crate::pool::Pool;
     use std::f64::EPSILON;
-
-    #[test]
-    fn breeder() {
-        let mut pool = Pool::new(10, NeatBreeder::default());
-
-        for i in 0..100 {
-            let (id, g) = pool.next().unwrap();
-            let mut o = NeatNetwork::new(g.clone());
-            let input = vec![0.0, 0.0];
-            let mut output = vec![0.0, 0.0];
-            o.activate(input, &mut output);
-            pool.report(id, g, output.iter().sum::<f64>() as f64);
-        }
-        let (id, g) = pool.next().unwrap();
-        let mut o = NeatNetwork::new(g.clone());
-        let input = vec![0.0, 0.0];
-        let mut output = vec![0.0, 0.0];
-        o.activate(input, &mut output);
-        println!("{:?}", output);
-    }
 
     #[test]
     fn mutation_connection_weight() {

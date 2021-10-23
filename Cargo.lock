@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "evo",
  "legion",
+ "ndarray",
  "rand",
  "termion",
  "tui",
@@ -313,6 +314,19 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "ndarray"
+version = "0.15.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08e854964160a323e65baa19a0b1a027f76d590faba01f05c0cbc3187221a8c9"
+dependencies = [
+ "matrixmultiply 0.3.1",
+ "num-complex",
+ "num-integer",
+ "num-traits",
+ "rawpointer 0.2.1",
 ]
 
 [[package]]

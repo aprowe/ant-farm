@@ -8,6 +8,7 @@ tui = "*"
 legion = "*"
 termion = "*"
 rand = "*"
+ndarray = "*"
 evo = {path="evo"}
 
 [workspace]

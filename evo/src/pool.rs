@@ -1,125 +1,7 @@
-use maplit::hashmap;
-use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use statrs::distribution::{Normal, ContinuousCDF};
 
 use crate::breeder::Breeder;
 use crate::utils::*;
-
-pub struct Species<B: Breeder> {
-    pub model: B::Genome,
-    pub champion: Option<(f64, B::Genome)>,
-    pub pool: Vec<B::Genome>,
-    pub reported: Vec<(f64, B::Genome)>,
-    pub gens_empty: i32,
-    pub last_mean: f64,
-}
-
-impl<B: Breeder> Species<B> {
-    pub fn new(model: B::Genome) -> Self {
-        Self {
-            model,
-            gens_empty: 0,
-            pool: vec![],
-            reported: vec![],
-            champion: None,
-            last_mean: 0.0,
-        }
-    }
-
-    pub fn from_breeder(breeder: &B) -> Self {
-        Self::new(breeder.random())
-    }
-
-    pub fn choose_model(&mut self) {
-        if self.reported.len() == 0 {
-            return;
-        }
-
-        // Sort scores
-        self.reported.sort_by_key(|x| (-100000.0 * x.0) as i32);
-        // record mean
-        self.last_mean = self.reported.iter().map(|x| x.0).sum::<f64>() / self.reported.len() as f64;
-        // Record champion
-        self.champion = Some(self.reported.first().unwrap().clone());
-        self.model = self.reported.sample().clone().1;
-
-//         let top = self
-//             .reported
-//             .iter()
-//             .take(10)
-//             .map(|(s, _)| *s)
-//             .collect::<Vec<f64>>();
-
-        // if let Some((_, model)) = self.reported.first().cloned() {
-        // } else {
-        //     unreachable!();
-        // }
-    }
-
-    /// Generate the next generatio
-    pub fn next_generation(
-        &self,
-        breeder: &B,
-        global: &[&B::Genome],
-        size: i32,
-        ratios: &Ratios<f64>,
-    ) -> Vec<B::Genome> {
-        let size = std::cmp::max(1, size);
-        if self.reported.len() == 0 {
-            return vec![];
-        }
-        // let size = std::cmp::max(2, (self.reported.len() as f64 * growth).round() as usize);
-
-        // Get normalized ratio valies
-        let ratios = if size > 2 {
-            ratios.to_int(size as usize)
-        } else {
-            Ratios {
-                top: 1,
-                mutate: 1,
-                cross: 0,
-                random: 0,
-            }
-        };
-
-        // Start new pool with the top talent
-        let mut top: Vec<_> = self
-            .reported
-            .iter()
-            .take(std::cmp::max(ratios.top, 1))
-            .cloned()
-            .collect();
-
-        // Fill a new Pool
-        let mut new_pool = Vec::fill(ratios.random, || breeder.random());
-
-        // Create cross breeds
-        for _ in 0..ratios.cross {
-            let a = top.sample();
-            let b = if random() < 0.05 {
-                (0.0, (*Vec::from(global).sample()).clone())
-            } else {
-                top.sample().clone()
-            };
-
-
-            if a.0 > b.0 {
-                new_pool.push(breeder.breed(&a.1, &b.1));
-            } else {
-                new_pool.push(breeder.breed(&b.1, &a.1));
-            }
-        }
-
-        for _ in 0..ratios.mutate {
-            let a = top.sample();
-            new_pool.push(breeder.mutate(&a.1));
-        }
-
-        // Add top to pool
-        new_pool.append(&mut top.drain(..).map(|a| a.1).collect());
-        new_pool
-    }
-}
 
 ///
 /// Main Pool Struct
@@ -132,10 +14,9 @@ where
     breeder: B,
 
     /// Mutable Pooles
-    pool: Vec<(i32, B::Genome)>,
+    // pool: Vec<(i32, B::Genome)>,
     reported: Vec<(i32, B::Genome, f64)>,
-    species: HashMap<i32, Species<B>>,
-    cur_id: i32,
+    // species: HashMap<i32, Species<B>>,
 
     // Size of gene pool
     size: usize,
@@ -152,22 +33,14 @@ where
     pub gens_without_improvement: i32,
 }
 
-/// Make Pool an iterator
 impl<B> Iterator for Pool<B>
 where
     B: Breeder,
 {
     type Item = (i32, B::Genome);
 
-    ///
-    /// Get Next Gene in pool
-    ///
     fn next(&mut self) -> Option<Self::Item> {
-        if self.pool.is_empty() {
-            self.next_generation();
-        }
-
-        self.pool.pop()
+        Some(self.next().into())
     }
 }
 
@@ -180,11 +53,10 @@ where
     pub fn new(size: usize, breeder: B) -> Self {
         Self {
             size,
-            pool: Vec::<(i32, B::Genome)>::fill(size as usize, || (0, breeder.random())),
-            cur_id: 1,
-            species: hashmap! {
-                0 => Species::from_breeder(&breeder),
-            },
+            // pool: vec![],
+            // species: hashmap! {
+            //     0 => Species::from_breeder(&breeder),
+            // },
             breeder,
             ratios: Ratios {
                 top: 0.05,
@@ -202,228 +74,104 @@ where
         }
     }
 
-    /// Report a Gene back to the pool
-    pub fn report<F>(&mut self, species_id: i32, member: F, score: f64) -> bool
-    where
-        F: Into<B::Genome>,
-    {
-        if let Some(s) = self.species.get_mut(&species_id) {
-            s.reported.push((score, member.into()));
-        } else {
-            self.species
-                .insert(self.cur_id, Species::new(member.into()));
-            self.cur_id += 1;
-        }
-
-        if self.pool.len() == 0 {
-            self.next_generation();
-            return true;
-        }
-
-        false
-    }
-
     fn next<F>(&mut self) -> (i32, F)
     where
         F: From<B::Genome>,
     {
-        if self.pool.is_empty() {
-            self.next_generation();
-        }
-        let tup = self.pool.pop().unwrap();
-        (tup.0, tup.1.into())
-    }
-
-    /// Calculate the Running Mean score
-    pub fn mean_score(&self) -> f64 {
-        if self.species.len() == 0 {
-            panic!("No Species!");
+        if self.reported.len() <= 1 {
+            return (0, self.breeder.random().into());
         }
 
-        self.species
-            .iter()
-            .map(|(_, s)| s.last_mean)
-            .sum::<f64>()
-            / self.species.len() as f64
-    }
-
-    /// Calculate the Running Mean score
-    pub fn mean_best(&self) -> f64 {
-        if self.species.len() == 0 {
-            panic!("No Species!");
+        // Let Pool Fill up
+        let x = self.reported.len() as f64 / self.size as f64 * 10.0;
+        if random() > x {
+            return (0, self.breeder.random().into());
         }
 
-        let scores: Vec<_> = self
-            .species
-            .values()
-            .filter(|s| s.champion.is_some())
-            .map(|s| s.champion.as_ref().unwrap().0)
-            .collect();
-
-        scores.sum() / scores.len() as f64
-    }
-
-    /// Calculate the Running Mean score
-    pub fn get_champion(&self) -> Option<(f64, B::Genome)> {
-        if self.species.len() == 0 {
-            return None;
-        }
-
-        let mut best: Option<&(f64, B::Genome)> = None;
-        for c in self
-            .species
-            .values()
-            .filter(|s| s.champion.is_some())
-            .map(|s| s.champion.as_ref().unwrap())
-        {
-            if best.is_none() || c.0 > best.unwrap().0 {
-                best = Some(&c);
+        let cum = self.ratios.cumulative();
+        let next = match random() {
+            x if x < cum.top => {
+                // dbg!("Top");
+                self.reported.sample().1.clone()
             }
-        }
-        best.cloned()
-    }
-
-    /// Generate the next generatio
-    pub fn next_generation(&mut self) {
-        // Sort and Choose model for each species
-        self.species.values_mut().for_each(|s| {
-            s.choose_model();
-
-            if s.reported.len() == 0 {
-                s.gens_empty += 1;
-            } else {
-                s.gens_empty = 0;
+            x if x < cum.mutate => {
+                // dbg!("Mutate");
+                self.breeder.mutate(&self.reported.sample().1)
             }
-        });
+            x if x < cum.cross => {
+                // dbg!("Cross");
+                self.breeder.breed(&self.reported.sample().1, &self.reported.sample().1)
+            }
+            _ => {
+                // dbg!("Random");
+                self.breeder.random()
+            }
+        };
 
-        // Keep species less than 3 empty generations
-        self.species.retain(|_, s| s.gens_empty == 0);
-
-        // Calculate last mean
-        self.last_mean = self.mean_score();
-
-        let champion = self.get_champion();
-        if self.champion.is_none()
-            || (champion.is_some()
-                && champion.as_ref().unwrap().0 > self.champion.as_ref().unwrap().0)
-        {
-            self.champion = champion;
-            self.gens_without_improvement = 0;
-        } else {
-            self.gens_without_improvement += 1;
-        }
-
-        eprintln!("Generation {}:", self.generations);
-        eprintln!("\tMean = {}", self.last_mean);
-        eprintln!("\tMean Best = {}", self.mean_best());
-        eprintln!(
-            "\tBest Score= {}",
-            self.champion.as_ref().map(|c| c.0).unwrap_or(-9999.9)
-        );
-        eprintln!("\tSpecies = {}", self.species.len());
-
-        // Get refrence for all models
-        let combined_pool: Vec<&B::Genome> = self
-            .species
-            .iter()
-            .flat_map(|(_, s)| s.reported.iter().map(|(_, s)| s))
-            .take(self.size)
-            .collect();
-
-        eprintln!("\tReported = {}", combined_pool.len());
-
-        // Evolve And Sort Each Species
-        let mut new_pool: Vec<(Option<i32>, B::Genome)> = self.species.values()
-            // Flatten and gather new genomes
-            .flat_map(|s| {
-                let size = s.last_mean * (self.size as f64) / self.last_mean / self.species.len() as f64;
-                s.next_generation(&self.breeder, &combined_pool, size.round() as i32, &self.ratios)
-            })
-            // Iterator over all genomes
-            .map(|g| {
-                (
-                    // Find a matching Species (Option<i32>)
-                    self.species
-                        .iter()
-                        .find(|(_, s)| self.breeder.is_same(&s.model, &g))
-                        // Get its ID if it exists
-                        .map(|s| *s.0),
-                    // Pair it with a genome
-                    g,
-                )
-            })
-            .collect();
-
-        new_pool.shuffle();
-
-        // Resolve new IDs
-        let mut new_pool: Vec<(i32, B::Genome)> = new_pool
-            .into_iter()
-            .take(self.size + (self.size as f64 * self.species.len() as f64 * 0.1) as usize)
-            .map(|(id, g)| {
-                if let Some(id) = id {
-                    (id, g)
-                } else {
-                    self.cur_id += 1;
-                    self.species.insert(self.cur_id, Species::new(g.clone()));
-                    // Fix New Species
-                    (self.cur_id, g)
-                }
-            })
-            .collect();
-
-        // for (id, s) in self.species.iter().filter(|(_, s)| s.champion.is_some()) {
-        //     new_pool.push((*id, s.champion.as_ref().unwrap().clone().1));
-        // }
-
-        eprintln!("\tOrganisms = {}", new_pool.len());
-
-        // eprintln!("Cleaning up");
-        // Clears its reported genes
-        self.species.values_mut().for_each(|s| {
-            s.reported = vec![];
-        });
-
-        self.pool = new_pool;
-        self.mean_score = self.mean_score();
-        self.reported = vec![];
-        self.generations += 1;
+        (0, next.into())
     }
 
-    pub fn run<F, G>(
-        &mut self,
-        max_gens: i32,
-        max_gens_without_improve: i32,
-        f: F,
-    ) -> (bool, f64, G)
+    // fn report(&mut self, score: f64, gene: B::Genome) {
+    pub fn report<F>(&mut self, species_id: i32, genome: F, score: f64) -> bool
     where
-        F: Fn(G) -> f64,
-        G: From<B::Genome>,
+        F: Into<B::Genome>,
     {
-        let mut t1 = SystemTime::now();
-        while self.generations < max_gens
-            && self.gens_without_improvement < max_gens_without_improve
-        {
-            // let now = SystemTime::now().duration_since(t1).unwrap();
-            // eprintln!("{:?}", now);
-            // t1 = SystemTime::now();
-            let (id, g): (i32, B::Genome) = self.next();
-            let score = f(g.clone().into());
-            self.report(id, g, score);
-        }
-
-        let converged = self.gens_without_improvement >= max_gens_without_improve;
-
-        eprintln!(
-            "Done after {} Generations, Score: {}, Converged: {}",
-            self.generations,
-            self.champion.as_ref().unwrap().0,
-            converged
-        );
-
-        let champ = self.champion.as_ref().cloned().unwrap();
-        (converged, champ.0, champ.1.into())
+        self.reported.push((0, genome.into(), score));
+        self.cull_weak();
+        true
     }
+
+    fn cull_weak(&mut self) {
+        if self.reported.len() <= 10 {
+            return;
+        }
+        // Get Scores and stats on score
+        let scores: Vec<_> = self.reported.iter().map(|r| r.2).collect();
+
+        // Create normal distribution
+        let (mean, std) = scores.std();
+        let stats = Normal::new(mean, std).unwrap();
+        eprintln!("{}, {}", mean, std);
+
+        // Sort scores
+        self.reported.sort_by(|a, b| {
+            a.2.partial_cmp(&b.2).unwrap()
+        });
+
+        // Probability Coeffictient
+        let mut y = self.reported.len() as f64 / self.size as f64;
+        let dy = 1.0 / self.size as f64;
+        let mut current_size = self.reported.len() as f64;
+        let orig_size = current_size;
+        let max_size = self.size as f64;
+
+        // Probabilities
+        let len = self.reported.len();
+        self.reported.retain(|r|{
+            // Get the Cumulated Distribution probability
+            let x = stats.cdf(r.2);
+
+            // Transform it with how full the pool is
+            let x = transform_prob(x, current_size / max_size);
+            if random() / orig_size > x {
+                current_size -= 1.0;
+                return false;
+            }
+            true
+        });
+
+        eprintln!("{} => {}", len, self.reported.len())
+    }
+}
+
+/// Transform probability based on a second factor
+/// x:0-1 main probility
+/// f(x, y=0) => 1
+/// f(x, y=0.5) => x
+/// f(x, y=1) => 0
+fn transform_prob(x: f64, y: f64) -> f64{
+    let a = 1.0 - 1.0/y;
+    a * x / (a*x + (1.0-x) / a)
 }
 
 /// Define ratio of different breed strategies
@@ -439,12 +187,12 @@ where
     pub random: T,
 }
 
-impl Ratios<f64> {
+impl Ratios<f32> {
     /// Convert into integer ratios
-    pub fn to_int(&self, max: usize) -> Ratios<usize> {
-        let top = (max as f64 * self.top).floor() as usize;
-        let mutate = (max as f64 * self.mutate).floor() as usize;
-        let cross = (max as f64 * self.cross).floor() as usize;
+    fn to_int(&self, max: usize) -> Ratios<usize> {
+        let top = (max as f32 * self.top).floor() as usize;
+        let mutate = (max as f32 * self.mutate).floor() as usize;
+        let cross = (max as f32 * self.cross).floor() as usize;
         Ratios {
             top,
             mutate,
@@ -453,7 +201,10 @@ impl Ratios<f64> {
         }
     }
 
-    pub fn cumulative(&self) -> Self {
+}
+
+impl<T> Ratios<T> where T: std::ops::Add<T, Output=T> + Copy + Clone {
+    fn cumulative(&self) -> Self {
         Self {
             top: self.top,
             mutate: self.top + self.mutate,
@@ -466,41 +217,35 @@ impl Ratios<f64> {
 #[cfg(test)]
 mod test {
     use super::*;
-
     use crate::breeder::FloatBreeder;
 
     #[test]
-    fn test_species() {
-        let f = FloatBreeder::default();
-        let mut s = Species::from_breeder(&f);
-        s.pool.push(FloatBreeder::default().random());
-    }
-
-    struct Fuck {
-        x: f64,
-    }
-
-    impl From<f64> for Fuck {
-        fn from(x: f64) -> Self {
-            Self { x }
+    fn test_new_pool() {
+        let mut pool = Pool::new(100, FloatBreeder::default());
+        for i in 0..100 {
+            let f = i as f64;
+            let (_, f) : (_, f64) = pool.next();
+            pool.report(0, f, random());
         }
+
+        // pool.cull_weak();
     }
 
     #[test]
-    fn test_pool() {
-        let f = FloatBreeder::default();
-        let mut pool = Pool::new(100, f);
-        for i in 0..10000 {
-            let (id, g): (_, Fuck) = pool.next();
-            pool.report(id, g.x, g.x.abs());
+    fn print_prob() {
+        let mut vec: Vec<_> = vec![];
+        let stats = Normal::new(0.5, 0.25).unwrap();
+        for i in 0..100 {
+            let f = i as f64 / 100.0;
+            let x = stats.cdf(f);
+            vec.push((f, x,
+                    transform_prob(x, 0.25),
+                    transform_prob(x, 0.50),
+                    transform_prob(x, 0.75),
+                    ))
         }
+
+        dbg!(vec);
     }
 
-    #[test]
-    fn test_run() {
-        let f = FloatBreeder::default();
-        let mut pool = Pool::new(100, f);
-        let result = pool.run(100, 5, |g: Fuck| g.x.abs());
-        assert!(result.2.x.abs() > 0.999);
-    }
 }

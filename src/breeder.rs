@@ -1,6 +1,8 @@
-use evo::utils::random;
-use evo::{NeatBreeder, Pool2 as Pool, VecBreeder, derive_breeder, Breeder};
+use evo::{NeatBreeder, Pool, VecBreeder, derive_breeder, Breeder};
 
+//////////////////////////////////
+/// Primary Creature Breeder Struct
+///
 #[derive_breeder]
 pub struct AntBreeder {
     #[breeder(0.1)]
@@ -10,6 +12,7 @@ pub struct AntBreeder {
     pub network: NeatBreeder
 }
 
+/// type Aliases
 pub type AntGenome = <AntBreeder as Breeder>::Genome;
 pub type AntPool = Pool<AntBreeder>;
 
@@ -22,7 +25,11 @@ impl Default for AntBreeder {
 
         Self {
             color: breeder,
-            network: NeatBreeder::default(),
+            network: NeatBreeder {
+                inputs: 2,
+                outputs: 2,
+                ..NeatBreeder::default()
+            }
         }
     }
 }

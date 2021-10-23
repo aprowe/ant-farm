@@ -1,3 +1,7 @@
+
+//////////////////////////////////
+/// Random functions
+///
 pub fn random() -> f64 {
     rand::random()
 }
@@ -28,6 +32,9 @@ where
     }
 }
 
+//////////////////////////////////
+/// Vec Utils
+///
 pub trait VecUtils {
     type Item;
 
@@ -75,13 +82,15 @@ impl<T> VecUtils for Vec<T> {
     }
 }
 
-pub trait Sum<T> {
+//////////////////////////////////
+/// Stats Trait
+pub trait Stats<T> {
     fn sum(&self) -> T;
     fn mean(&self) -> T;
     fn std(&self) -> (T, T);
 }
 
-impl Sum<f64> for Vec<f64> {
+impl Stats<f64> for Vec<f64> {
     fn sum(&self) -> f64 {
         self.iter().fold(0.0, |a, b| a + b)
     }
@@ -102,5 +111,20 @@ impl Sum<f64> for Vec<f64> {
 macro_rules! assert_delta {
     ($x:expr, $y:expr, $d:expr) => {
         assert!(($x - $y).abs() < $d);
+    };
+}
+
+#[macro_export]
+macro_rules! assert_delta_vector {
+    ($x:expr, $y:expr, $d:expr) => {
+        for pos in 0..$x.len() {
+            if !(($x[pos] - $y[pos]).abs() <= $d) {
+                panic!(
+                    "Element at position {:?} -> {:?} \
+                     is not equal to {:?}",
+                    pos, $x[pos], $y[pos]
+                );
+            }
+        }
     };
 }

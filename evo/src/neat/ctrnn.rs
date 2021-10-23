@@ -34,7 +34,7 @@ impl Ctrnn {
         Ctrnn::telemetry(&y);
 
         for _ in 0..steps {
-            let current_weights = (&y + &theta).apply(&Ctrnn::sigmoid);
+            let current_weights = (&y + &theta).apply(&f64::tanh);
             y = &y
                 + ((&wji * current_weights) - &y + &i)
                     .elediv(&tau)
@@ -70,80 +70,3 @@ impl Ctrnn {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    macro_rules! assert_delta_vector {
-        ($x:expr, $y:expr, $d:expr) => {
-            for pos in 0..$x.len() {
-                if !(($x[pos] - $y[pos]).abs() <= $d) {
-                    panic!(
-                        "Element at position {:?} -> {:?} \
-                         is not equal to {:?}",
-                        pos, $x[pos], $y[pos]
-                    );
-                }
-            }
-        };
-    }
-
-    #[test]
-    fn neural_network_activation_should_return_correct_values() {
-        let gamma = vec![0.0, 0.0, 0.0];
-        let tau = vec![61.694, 10.149, 16.851];
-        let wji = vec![
-            -2.94737, 2.70665, -0.57046, -3.27553, 3.67193, 1.83218, 2.32476, 0.24739, 0.58587,
-        ];
-        let theta = vec![-0.695126, -0.677891, -0.072129];
-        let i = vec![0.98856, 0.31540, 0.0];
-
-        let nn = CtrnnNeuralNetwork {
-            y: &gamma,
-            tau: &tau,
-            wji: &wji,
-            theta: &theta,
-            i: &i,
-        };
-
-        let ctrnn = Ctrnn::default();
-
-        assert_delta_vector!(
-            ctrnn.activate_nn(1.0, 0.1, &nn),
-            vec![
-                0.010829986965909134,
-                0.1324987329841768,
-                0.06644643156742948
-            ],
-            0.00000000000000000001
-        );
-
-        assert_delta_vector!(
-            ctrnn.activate_nn(2.0, 0.1, &nn),
-            vec![
-                0.02255533337532507,
-                0.26518982989312406,
-                0.13038140193371967
-            ],
-            0.00000000000000000001
-        );
-
-        assert_delta_vector!(
-            ctrnn.activate_nn(10.0, 0.1, &nn),
-            vec![0.14934191797049204, 1.3345894864370869, 0.5691613026150651],
-            0.00000000000000000001
-        );
-
-        assert_delta_vector!(
-            ctrnn.activate_nn(30.0, 0.1, &nn),
-            vec![0.5583616282859531, 3.149231725259237, 1.3050168324825089],
-            0.00000000000000000001
-        );
-
-        // converges
-        assert_delta_vector!(
-            ctrnn.activate_nn(100.0, 0.1, &nn),
-            vec![1.1121375647080136, 3.43423133661062, 2.0992832630144376],
-            0.00000000000000000001
-        );
-    }
-}

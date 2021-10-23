@@ -1,6 +1,8 @@
 use tui::layout::Rect;
 
-
+//////////////////////////////////
+/// Time Related Info
+///
 #[derive(Copy, Clone, Debug)]
 pub struct Time {
     pub dt: f64,
@@ -24,6 +26,9 @@ impl Time {
     }
 }
 
+//////////////////////////////////
+/// World Config
+///
 pub struct Config {
     pub bounds: Rect,
 }

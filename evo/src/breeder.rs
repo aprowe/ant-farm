@@ -2,7 +2,8 @@ use crate::utils::*;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-/// Breeder trait {{{1
+//////////////////////////////////
+/// Breeder Trait
 /// Provides methods to create new and mix Genes
 pub trait Breeder {
     type Genome: Clone + Debug;
@@ -12,8 +13,8 @@ pub trait Breeder {
     fn random(&self) -> Self::Genome;
     fn is_same(&self, gene1: &Self::Genome, gene2: &Self::Genome) -> bool;
 }
-
-/// VecBreeder {{{1
+//////////////////////////////////
+/// VecBreeder
 /// Breeder that breeds lists of floats
 pub struct VecBreeder {
     pub size: usize,
@@ -85,9 +86,10 @@ impl Breeder for VecBreeder {
             < self.is_same_threshold
     }
 }
-/// End VecBreeder
 
+//////////////////////////////////
 /// Float Breeder
+///
 pub struct FloatBreeder {
     pub min: f64,
     pub max: f64,
