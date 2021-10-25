@@ -37,10 +37,10 @@ impl<'a> Shape for BodyShape<'a> {
     fn draw(&self, painter: &mut Painter) {
         if let Some((ux, uy)) = painter.get_point(self.body.position.x, self.body.position.y) {
             if self.highlight {
-                painter.paint(ux, uy - 1, style::Color::LightBlue);
+                painter.paint(ux, uy, style::Color::LightBlue);
             }
 
-            painter.paint(ux, uy, Color::from(self.body.theta).into());
+            painter.paint(ux, uy, self.body.color.into());
         }
     }
 }

@@ -26,8 +26,8 @@ impl Default for AntBreeder {
         Self {
             color: breeder,
             network: NeatBreeder {
-                inputs: 2,
-                outputs: 2,
+                inputs: 5,
+                outputs: 3,
                 ..NeatBreeder::default()
             }
         }

@@ -16,6 +16,12 @@ pub struct Color {
 }
 
 impl Color {
+    pub fn rgb(r: f64, b:f64, g:f64) -> Self {
+        Color {
+            r, g, b, a: 1.0
+        }
+    }
+
     pub fn random() -> Color {
         Color {
             r: random() as f64,

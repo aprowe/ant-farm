@@ -11,6 +11,7 @@ use crate::field::Field;
 use crate::prelude::*;
 use crate::render;
 use crate::systems::*;
+use crate::widgets::*;
 use evo::pool::Ratios;
 use termion::event::Key;
 use termion::raw::IntoRawMode;
@@ -40,21 +41,28 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let config = Config { bounds };
 
     // Pheromone Field
-    let field = Field::new(
+    let mut field = Field::new(
         100,
         100,
-        vec![0.99; 3],
-        vec![0.9; 3],
-        array![[1.0, 1.0, 0.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0],],
+        vec![0.99, 0.95],
+        vec![0.8, 0.99],
+        array![[0.0, 1.0, 0.0], [1.0, 0.0, 0.0]], //[1.0, 0.0, 1.0],],
     );
 
+    // field.set(30, 30, vec![1.0, 100.0, 0.0]);
+    // field.set(60, 60, vec![0.0, 0.0, 10.0]);
+
     // Add Creatures' components
-    for (id, g) in (&mut pool).take(50) {
+    for (id, g) in (&mut pool).take(400) {
         world.push(Creature::new(id, g, &config));
     }
 
+    for _ in 0..20 {
+        world.push(Food::new(vec![1.0, 0.0], &config));
+    }
+
     // Setup event handlers
-    let time = Time {
+    let mut time = Time {
         dt: 0.1,
         elapsed: 0.0,
     };
@@ -64,11 +72,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     resources.insert(config);
     resources.insert(pool);
     resources.insert(field);
-    resources.insert(time.tick());
+    resources.insert(time);
 
     // Set up Update Schedule
     let mut schedule = Schedule::builder()
-        .add_system(detect_system())
+        .add_system(update_emitters_system())
+        // .add_system(detect_system())
         .add_system(update_networks_system())
         .add_system(update_energy_system())
         .add_system(remove_dead_system())
@@ -84,7 +93,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         terminal.draw(|f| {
             // Draw Main Canvas
             let canvas = tui::widgets::canvas::Canvas::default()
-                .marker(tui::symbols::Marker::Dot)
+                // .marker(tui::symbols::Marker::Dot)
                 .paint(|ctx| {
                     render::render(ctx, &world, &resources);
                 })
@@ -115,6 +124,10 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 .x_bounds([0.0, 1.0])
                 .y_bounds([0.0, 1.0]);
             f.render_widget(canvas, Rect::new(0, 0, 40, 20));
+
+            if let Some(field) = resources.get::<Field>() {
+                f.render_widget(FieldWidget::from(&(*field)), f.size());
+            }
         })?;
 
         // Handle Events
@@ -142,9 +155,15 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 _ => {}
             },
             TermEvent::Tick => {
-                resources.insert(time.tick());
+                // Update Time
+                time.elapsed += time.dt;
+                resources.insert(time);
 
                 for _ in 0..speed {
+                    // update field
+                    if let Some(mut field) = resources.get_mut::<Field>() {
+                        field.update(time.dt);
+                    }
                     schedule.execute(&mut world, &mut resources);
                 }
             }

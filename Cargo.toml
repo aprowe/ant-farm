@@ -13,5 +13,6 @@ evo = {path="evo"}
 
 [workspace]
 members = [
-    "evo"
+    "evo",
+    "render",
 ]

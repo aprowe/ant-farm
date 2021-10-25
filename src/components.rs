@@ -3,32 +3,57 @@ use evo::utils::random;
 use evo::NeatGenome;
 use evo::NeatNetwork;
 
+#[derive(Clone, Debug, Copy, PartialEq)]
+pub enum BodyType {
+    Food,
+    Creature
+}
+
 ///////////////////////////////
-/// Body
+/// Body {{{1
 ///
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Body {
+    pub body_type: BodyType,
     pub energy: Energy,
     pub color: Color,
     pub position: Position,
     pub theta: f64,
+    pub emits: Vec<f64>
 }
 
 impl Body {
     pub fn random(rect: &Rect) -> Body {
         Body {
-            energy: Default::default(),
+            body_type: BodyType::Creature,
             position: Position::random(rect),
             color: Color::random(),
             theta: random(),
+            ..Default::default()
         }
     }
 
+    /// Builder methods
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
+    pub fn body_type(mut self, body_type: BodyType) -> Self {
+        self.body_type = body_type;
+        self
+    }
+    pub fn emits(mut self, emits: Vec<f64>) -> Self {
+        self.emits = emits;
+        self
+    }
 
+
+    // Distance to another body
+    pub fn dist_sq(&self, b: &Body) -> f64 {
+        self.position.dist_sq(&b.position)
+    }
+
+    // Detect another body
     pub fn detect(&self, b2: &Body, dist: f64, angle: f64) -> f64 {
         let d = self.position.dist_sq(&b2.position);
         if d > dist * dist {
@@ -43,8 +68,24 @@ impl Body {
     }
 }
 
+impl Default for Body {
+    fn default() -> Self {
+        Body {
+            body_type: BodyType::Creature,
+            energy: Default::default(),
+            color: Color::random(),
+            position: Position {
+                x: 0.,
+                y: 0.,
+            },
+            theta: random(),
+            emits: vec![],
+        }
+    }
+}
+
 //////////////////////////////////
-/// Energy
+/// Energy {{{ 1
 ///
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Energy {
@@ -62,7 +103,7 @@ impl Default for Energy {
 }
 
 //////////////////////////////////
-/// Network
+/// Network {{{1
 ///
 #[derive(Clone, Debug)]
 pub struct Network {
@@ -95,7 +136,7 @@ impl Network {
 }
 
 //////////////////////////////////
-/// Genetic
+/// Genetic {{{1
 ///
 #[derive(Clone, Debug)]
 pub struct Genetic<T: Clone> {
@@ -127,27 +168,13 @@ mod test {
     #[test]
     fn test_detect() {
         let b1 = Body {
-            energy: Default::default(),
             position: Position { x: 0.0, y: 0.0 },
-            color: Color {
-                r: 0.0,
-                g: 0.0,
-                b: 1.0,
-                a: 1.0,
-            },
-            theta: 0.0,
+            ..Default::default()
         };
 
         let b2 = Body {
-            energy: Default::default(),
             position: Position { x: 1.0, y: 0.0 },
-            color: Color {
-                r: 0.0,
-                g: 0.0,
-                b: 1.0,
-                a: 1.0,
-            },
-            theta: 0.0,
+            ..Default::default()
         };
 
         assert_eq!(b1.detect(&b2, 1.1, 0.01), 1.0);

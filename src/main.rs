@@ -9,6 +9,7 @@ mod render;
 mod resources;
 mod systems;
 mod utils;
+mod widgets;
 
 fn main() {
     app::run();
