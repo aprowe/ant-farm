@@ -1,7 +1,11 @@
+use std::sync::Arc;
+use std::sync::Mutex;
+
 use crate::breeder::*;
 use crate::components::*;
 use crate::creature::*;
 use crate::field::*;
+use crate::field_render::FieldRenderer;
 use crate::resources::*;
 use crate::utils::*;
 use evo::utils::random;
@@ -37,6 +41,8 @@ pub fn detect(
             }
         }
     }
+
+
     // body.energy.amt += body2.energy.amt;
     // body2.energy.amt = 0.0;
 
@@ -84,6 +90,7 @@ pub fn update_networks(
     #[resource] config: &Config,
     #[resource] time: &Time,
     #[resource] field: &Field,
+    // #[resource] field: &Arc<Mutex<FieldRenderer>>,
 ) {
     // let (px, py, _) = (1.0, 0.0, 0.0);
     // pos.x / config.bounds.width as f64 - 0.5,
@@ -107,15 +114,18 @@ pub fn update_networks(
     let x = body.position.x / config.bounds.width as f64;
     let y = 1.0 - body.position.y / config.bounds.height as f64;
 
+    // let vals = field.lock().unwrap().get(x.round() as usize, y.round() as usize);
+
     // get derivative input
     let inputs = field.get_derivative(x, y)
         .iter()
         .flat_map(|a| vec![a.0, a.1])
         .collect::<Vec<f64>>();
+    // let inputs = vec![vals[0], vals[1]];
 
     let out = net.network.activate(inputs.clone(), time.dt);
-    genes.fitness += field.get_norm(x, y)[0] * time.dt;
-    genes.fitness -= field.get_norm(x, y)[1] * time.dt * 0.1;
+    // genes.fitness += field.get_norm(x, y)[0] * time.dt;
+    // genes.fitness -= field.get_norm(x, y)[1] * time.dt * 0.1;
 
     // energy.amt -= out[0].abs() + out[1].abs() * 0.01 * time.dt;
 
@@ -125,6 +135,7 @@ pub fn update_networks(
     body.theta += out[0] * time.dt * 1.;
     // body.theta += time.dt * 0.5;
     body.position = body.position.advance(out[1] * time.dt * 3.0, body.theta);
+    // body.position = body.position.advance(0.1, body.theta);
     body.emits = vec![0.0, out[2].clamp(0.0, 1.0)];
 
     // genes.fitness -=

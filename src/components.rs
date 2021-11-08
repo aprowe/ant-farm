@@ -28,7 +28,7 @@ impl Body {
             body_type: BodyType::Creature,
             position: Position::random(rect),
             color: Color::random(),
-            theta: random(),
+            theta: random() * std::f64::consts::TAU,
             ..Default::default()
         }
     }

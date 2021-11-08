@@ -1,7 +1,49 @@
 pub use evo::utils::random;
 pub use evo::utils::random_d;
 pub use evo::utils::random_i;
-pub use tui::layout::Rect;
+
+// Multi Type Rect
+pub struct RectBase<T>
+where
+    T: Copy + std::ops::Add<T, Output = T>,
+{
+    pub x: T,
+    pub y: T,
+    pub width: T,
+    pub height: T,
+}
+
+// Unsigned rect
+pub type Rect = RectBase<u16>;
+
+// Float rect
+pub type Rectf = RectBase<f64>;
+
+impl<T> RectBase<T>
+where
+    T: Copy + std::ops::Add<T, Output = T>,
+{
+    pub fn new(x: T, y: T, width: T, height: T) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+    pub fn left(&self) -> T {
+        self.x
+    }
+    pub fn right(&self) -> T {
+        self.x + self.width
+    }
+    pub fn top(&self) -> T {
+        self.y
+    }
+    pub fn bottom(&self) -> T {
+        self.y + self.height
+    }
+}
 
 /////////////////////////////////////
 ///
@@ -16,10 +58,8 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn rgb(r: f64, b:f64, g:f64) -> Self {
-        Color {
-            r, g, b, a: 1.0
-        }
+    pub fn rgb(r: f64, b: f64, g: f64) -> Self {
+        Color { r, g, b, a: 1.0 }
     }
 
     pub fn random() -> Color {
@@ -54,6 +94,12 @@ impl From<&Color> for [f64; 4] {
     }
 }
 
+impl From<&Color> for [f32; 3] {
+    fn from(c: &Color) -> Self {
+        [c.r as f32, c.g as f32, c.b as f32]
+    }
+}
+
 impl From<&Vec<f64>> for Color {
     fn from(v: &Vec<f64>) -> Self {
         Color {
@@ -76,9 +122,9 @@ impl From<f64> for Color {
     }
 }
 
-impl From<Color> for tui::style::Color {
-    fn from(c: Color) -> tui::style::Color {
-        tui::style::Color::Rgb(
+impl From<Color> for (u8, u8, u8) {
+    fn from(c: Color) -> (u8, u8, u8) {
+        (
             (c.a * c.r * 255.).floor() as u8,
             (c.a * c.b * 255.).floor() as u8,
             (c.a * c.g * 255.).floor() as u8,

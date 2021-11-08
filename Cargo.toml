@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-tui = "*"
+# tui = "*"
 legion = "*"
-termion = "*"
+# termion = "*"
 rand = "*"
 ndarray = "*"
+glium = "*"
 evo = {path="evo"}
 
 [workspace]
 members = [
     "evo",
-    "render",
 ]

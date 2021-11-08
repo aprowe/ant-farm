@@ -1,4 +1,4 @@
-use tui::layout::Rect;
+use crate::utils::Rect;
 
 //////////////////////////////////
 /// Time Related Info
