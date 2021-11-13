@@ -26,6 +26,6 @@ impl Food {
         (Body::random(&c.bounds)
             .body_type(BodyType::Food)
             .emits(emits)
-            .color(Color::rgb(0.0, 1.0, 0.0)),)
+            .color(Color::rgb(1.0, 0.0, 0.0)),)
     }
 }

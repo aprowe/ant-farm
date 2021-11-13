@@ -21,12 +21,12 @@ vec3 render() {
             texture2D(TEX, uv_norm + vec2(1.0, 0.0) * texelSize);
 
         vec4 cur = texture2D(TEX, uv_norm);
-        float dt = 0.5;
-        vec3 output = ((1 - dt) * cur + dt * value / 2.0).xyz;
+        float dt = 0.80;
+        vec3 output = ((1 - dt) * cur + dt * value / 4.0).xyz;
 
-        return output;
+        return output * 0.994;
     } else {
-        return texture(TEX, (uv + 1.0) / 2.0).xyz;
+        return texture(TEX, (uv + 1.0) / 2.0).xyz * 10;
         /* return vec3(0.0, 1.0, 0.0); */
     }
 }

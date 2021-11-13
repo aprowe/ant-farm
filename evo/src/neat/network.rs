@@ -28,22 +28,25 @@ impl NeatNetwork {
     }
 
     /// Activate this network in the NN
-    pub fn activate(&self, mut inputs: Vec<f64>, dt: f64) -> Vec<f64> {
+    pub fn activate(&self, mut inputs: Vec<f64>, mut state: Vec<f64>, dt: f64) -> (Vec<f64>, Vec<f64>) {
         let in_len = inputs.len();
 
         // Make same length as
         inputs.truncate(self.genome.len());
         inputs.extend(vec![0.0; self.genome.len() - inputs.len()]);
 
+        state.truncate(self.genome.len());
+        state.extend(vec![0.0; self.genome.len() - state.len()]);
+
         let activations = Ctrnn::default().activate_nn(
             dt,
-            dt / 2.0,
+            dt,
 
             &CtrnnNeuralNetwork {
                 //current state of neuron(j)
-                y: &vec![0.0; self.genome.len()],
+                y: &state,
                 //τ - time constant ( t > 0 ). The neuron's speed of response to an external sensory signal. Membrane resistance time.
-                tau: &vec![0.01; self.genome.len()],
+                tau: &vec![0.10; self.genome.len()],
                 //w - weights of the connection from neuron(j) to neuron(i)
                 wji: &self.get_weights(),
                 //θ - bias of the neuron(j)
@@ -53,15 +56,16 @@ impl NeatNetwork {
             }
         );
 
-        activations.split_at(in_len).1.to_vec()
+        let split = activations.split_at(in_len);
+        (split.1.to_vec(), activations)
     }
 
     fn get_weights(&self) -> Vec<f64> {
         let neurons_len = self.genome.len();
         let mut matrix = vec![0.0; neurons_len * neurons_len];
         for gene in self.genome.get_genes() {
-            if gene.enabled() {
-                matrix[(gene.out_neuron_id() * neurons_len) + gene.in_neuron_id()] = gene.weight()
+            if gene.enabled {
+                matrix[(gene.out_neuron_id * neurons_len) + gene.in_neuron_id] = gene.weight
             }
         }
         matrix
@@ -71,8 +75,8 @@ impl NeatNetwork {
         let neurons_len = self.genome.len();
         let mut matrix = vec![0.0; neurons_len];
         for gene in self.genome.get_genes() {
-            if gene.is_bias() {
-                matrix[gene.in_neuron_id()] += 1f64;
+            if gene.enabled {
+                matrix[gene.in_neuron_id] += gene.bias;
             }
         }
         matrix

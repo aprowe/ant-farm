@@ -1,6 +1,5 @@
 mod app;
 mod breeder;
-mod field_render;
 mod components;
 mod creature;
 mod field;
@@ -9,9 +8,7 @@ mod resources;
 mod systems;
 mod utils;
 mod render;
-
-use std::sync::Arc;
-use std::sync::Mutex;
+mod executor;
 
 use app::App;
 use crate::render::*;
@@ -47,18 +44,13 @@ fn main() {
 
     // Create renderer
     let renderer = AppRenderable::new(&app, &display);
-    let field = field::Field::new(10, 10, vec![0.0], vec![0.0], ndarray::array![
-        [0.0, 1.0, 0.0]
-    ]);
 
     // Field Renderer
-    let field_render = Arc::new(Mutex::new(field_render::FieldRenderer::default()));
-    let mut frender = field_render.lock().unwrap().render(&display);
-
-    app.resources.insert(field_render.clone());
+    let mut field = field::Field::new(&display);
+    app.resources.insert(field.to_arr());
 
     // Speed of sim
-    let sim_speed = 1;
+    let mut sim_speed = 1;
 
     let mut last_update = std::time::Instant::now();
 
@@ -87,8 +79,15 @@ fn main() {
                         if input.state == glutin::event::ElementState::Pressed {
                             if let Some(key) = input.virtual_keycode {
                                 match key {
-                                    glutin::event::VirtualKeyCode::C => {}
-                                    glutin::event::VirtualKeyCode::L => {}
+                                    glutin::event::VirtualKeyCode::Key1 => {
+                                        sim_speed = 1;
+                                    }
+                                    glutin::event::VirtualKeyCode::Key2 => {
+                                        sim_speed = 10;
+                                    }
+                                    glutin::event::VirtualKeyCode::Key3 => {
+                                        sim_speed = 50;
+                                    }
                                     _ => {}
                                 }
                             }
@@ -108,22 +107,23 @@ fn main() {
 
         // Update all
         for i in 0..sim_speed {
-            app.update(dt);
+            field.update();
+
+            // Update app
+            app.update(0.016);
+
+            // Update Field
+            if let Some(mut arr) = app.resources.get_mut::<field::FieldArr>() {
+                field.update_arr(&mut arr);
+            }
         }
 
         // Clear Display
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        use evo::utils::{random, random_i};
-
-        let x = random_i(900);
-        let y = random_i(900);
-        for i in 0..10 {
-            field_render.lock().unwrap().set(x + i, y + i,prelude::Color::rgb(random(), random(), 0.0));
-        }
-
-        frender(&mut target);
+        // Update / Render Field
+        field.render(&mut target);
         renderer.render(&app, &mut target);
         target.finish().unwrap();
     });

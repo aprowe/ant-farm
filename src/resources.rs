@@ -1,4 +1,5 @@
 use crate::utils::Rect;
+use std::f64::consts;
 
 //////////////////////////////////
 /// Time Related Info
@@ -22,7 +23,11 @@ impl Time {
     }
 
     pub fn sin(&self, period: f64, phase: f64) -> f64 {
-        f64::sin(self.elapsed * 2. * 3.14159 / period + phase)
+        f64::sin(self.elapsed * consts::TAU / period + phase * consts::TAU)
+    }
+
+    pub fn cos(&self, period: f64, phase: f64) -> f64 {
+        f64::cos(self.elapsed * consts::TAU / period + phase * consts::TAU)
     }
 }
 

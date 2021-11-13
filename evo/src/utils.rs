@@ -45,6 +45,7 @@ pub trait VecUtils {
     where
         F: FnMut() -> Self::Item;
     fn sample(&self) -> &Self::Item;
+    fn sample_weighted(&self, pow: i32) -> &Self::Item;
     fn shuffle(&mut self);
 }
 
@@ -72,6 +73,13 @@ impl<T> VecUtils for Vec<T> {
             panic!("Sample on Empty Vec");
         }
         unsafe { self.get_unchecked(random_i(self.len()) as usize) }
+    }
+
+    fn sample_weighted(&self, pow: i32) -> &Self::Item {
+        if self.len() == 0 {
+            panic!("Sample on Empty Vec");
+        }
+        unsafe { self.get_unchecked((random().powi(pow) * self.len() as f64).floor() as usize) }
     }
 
     fn shuffle(&mut self) {

@@ -92,7 +92,7 @@ where
         let next = match random() {
             x if x < cum.top => {
                 // dbg!("Top");
-                self.reported.sample().1.clone()
+                self.reported.sample_weighted(3).1.clone()
             }
             x if x < cum.mutate => {
                 // dbg!("Mutate");
@@ -100,7 +100,15 @@ where
             }
             x if x < cum.cross => {
                 // dbg!("Cross");
-                self.breeder.breed(&self.reported.sample().1, &self.reported.sample().1)
+
+                let g1 = self.reported.sample();
+                let g2 = self.reported.sample();
+
+                if g1.2 > g2.2 {
+                    self.breeder.breed(&g1.1, &g2.1)
+                } else {
+                    self.breeder.breed(&g2.1, &g1.1)
+                }
             }
             _ => {
                 // dbg!("Random");

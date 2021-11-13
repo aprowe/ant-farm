@@ -11,6 +11,7 @@ rand = "*"
 ndarray = "*"
 glium = "*"
 evo = {path="evo"}
+typemap = "*"
 
 [workspace]
 members = [

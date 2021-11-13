@@ -52,7 +52,7 @@ impl Renderable<App> for AppRenderable {
 
             // building the uniforms
             let uniforms = uniform! {
-                scale: 0.01f32,
+                scale: (body.radius / 100.0) as f32,
                 theta: body.theta as f32,
                 color: [body.color.r as f32, body.color.g as f32, body.color.b as f32],
                 pos: [body.position.x as f32 / 100.0, body.position.y as f32 / 100.0],

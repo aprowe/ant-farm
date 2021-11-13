@@ -19,7 +19,9 @@ pub struct Body {
     pub color: Color,
     pub position: Position,
     pub theta: f64,
-    pub emits: Vec<f64>
+    pub emits: Vec<f64>,
+    pub radius: f64,
+    pub history: std::collections::VecDeque<(f64, f64)>,
 }
 
 impl Body {
@@ -47,10 +49,25 @@ impl Body {
         self
     }
 
+    pub fn advance(&mut self, x: f64, y: f64) {
+        self.position.x += x;
+        self.position.y += y;
+
+        self.history.push_front((x, y));
+        if self.history.len() > 10 {
+            self.history.pop_back();
+        }
+    }
 
     // Distance to another body
     pub fn dist_sq(&self, b: &Body) -> f64 {
         self.position.dist_sq(&b.position)
+    }
+
+    // Distance to another body
+    pub fn touches(&self, b: &Body) -> bool {
+        let r = self.radius + b.radius;
+        self.position.dist_sq(&b.position) < r * r
     }
 
     // Detect another body
@@ -78,8 +95,10 @@ impl Default for Body {
                 x: 0.,
                 y: 0.,
             },
+            radius: 0.5,
             theta: random(),
             emits: vec![],
+            history: std::collections::VecDeque::new(),
         }
     }
 }
@@ -96,7 +115,7 @@ pub struct Energy {
 impl Default for Energy {
     fn default() -> Self {
         Self {
-            amt: 1.0,
+            amt: 1.5,
             decay: 0.1,
         }
     }
@@ -110,7 +129,7 @@ pub struct Network {
     pub network: NeatNetwork,
     pub inputs: i32,
     pub outputs: i32,
-    pub input_state: Vec<f64>,
+    pub state: Vec<f64>,
 }
 
 impl Default for Network {
@@ -119,7 +138,7 @@ impl Default for Network {
             inputs: 2,
             outputs: 2,
             network: NeatNetwork::random(2, 2),
-            input_state: vec![0.0; 2],
+            state: vec![0.0; 2],
         }
     }
 }
@@ -130,7 +149,7 @@ impl Network {
             inputs: 2,
             outputs: 2,
             network: NeatNetwork::from(genome),
-            input_state: vec![0.0; 2],
+            state: vec![0.0; 2],
         }
     }
 }

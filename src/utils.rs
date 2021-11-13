@@ -80,10 +80,26 @@ impl Color {
             self.b
         }
     }
+
+    pub fn dist(&self, c: &Color) -> f64 {
+        return self.dist_sq(c).sqrt();
+    }
+
+    pub fn dist_sq(&self, c: &Color) -> f64 {
+        return (self.r - c.r).powi(2) +
+            (self.g - c.g).powi(2) +
+            (self.b - c.b).powi(2);
+    }
 }
 
 impl From<&Color> for Vec<f64> {
     fn from(c: &Color) -> Self {
+        vec![c.r, c.g, c.b, c.a]
+    }
+}
+
+impl From<Color> for Vec<f64> {
+    fn from(c: Color) -> Self {
         vec![c.r, c.g, c.b, c.a]
     }
 }
@@ -100,13 +116,24 @@ impl From<&Color> for [f32; 3] {
     }
 }
 
+impl From<[f32; 3]> for Color {
+    fn from(c: [f32; 3]) -> Self {
+        Color {
+            r: c[0] as f64,
+            g: c[1] as f64,
+            b: c[2] as f64,
+            a: 1.0,
+        }
+    }
+}
+
 impl From<&Vec<f64>> for Color {
     fn from(v: &Vec<f64>) -> Self {
         Color {
-            r: v[0] as f64,
-            b: v[1] as f64,
-            g: v[2] as f64,
-            a: v[3] as f64,
+            r: *v.get(0).unwrap_or(&0.0) as f64,
+            b: *v.get(1).unwrap_or(&0.0) as f64,
+            g: *v.get(2).unwrap_or(&0.0) as f64,
+            a: *v.get(3).unwrap_or(&0.0) as f64,
         }
     }
 }
@@ -129,6 +156,80 @@ impl From<Color> for (u8, u8, u8) {
             (c.a * c.b * 255.).floor() as u8,
             (c.a * c.g * 255.).floor() as u8,
         )
+    }
+}
+
+impl From<Color> for (u8, u8, u8, u8) {
+    fn from(c: Color) -> (u8, u8, u8, u8) {
+        (
+            (c.r * 255.).floor() as u8,
+            (c.g * 255.).floor() as u8,
+            (c.b * 255.).floor() as u8,
+            (c.a * 255.).floor() as u8,
+        )
+    }
+}
+
+impl From<(u8, u8, u8, u8)> for Color {
+    fn from(pix: (u8, u8, u8, u8)) -> Color {
+        Color {
+            r:  pix.0 as f64 / 255.0,
+            g:  pix.1 as f64 / 255.0,
+            b:  pix.2 as f64 / 255.0,
+            a:  pix.3 as f64 / 255.0,
+        }
+    }
+}
+
+impl std::ops::Add<Color> for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r + rhs.r,
+            g: self.g + rhs.g,
+            b: self.b + rhs.b,
+            a: self.a.max(rhs.a),
+        }
+    }
+}
+
+impl std::ops::Sub<Color> for Color {
+    type Output = Color;
+
+    fn sub(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r - rhs.r,
+            g: self.g - rhs.g,
+            b: self.b - rhs.b,
+            a: self.a.max(rhs.a),
+        }
+    }
+}
+
+impl std::ops::Mul<f64> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Color {
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
+            a: self.a,
+        }
+    }
+}
+
+impl std::ops::Div<f64> for Color {
+    type Output = Color;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Color {
+            r: self.r / rhs,
+            g: self.g / rhs,
+            b: self.b / rhs,
+            a: self.a,
+        }
     }
 }
 
@@ -189,6 +290,24 @@ impl Position {
         Self {
             x: self.x + r * theta.sin(),
             y: self.y + r * theta.cos(),
+        }
+    }
+}
+
+impl std::ops::AddAssign<(f64, f64)> for Position {
+    fn add_assign(&mut self, rhs: (f64, f64)) {
+        self.x += rhs.0;
+        self.y += rhs.1;
+    }
+}
+
+impl std::ops::Add<(f64, f64)> for Position {
+    type Output = Position;
+
+    fn add(self, rhs: (f64, f64)) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs.0,
+            y: self.y + rhs.1,
         }
     }
 }
